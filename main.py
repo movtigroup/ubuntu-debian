@@ -1,4 +1,4 @@
-# import random
+import random
 import asyncio
 import time
 import logging
