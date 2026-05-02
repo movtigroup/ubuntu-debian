@@ -2,7 +2,7 @@ import random
 import asyncio
 import time
 import logging
-from typing import Dict, List, Optional, Tuple, AsyncIterator
+from typing import Dict, List, Optional, Tuple, AsyncIterator, Any
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -207,6 +207,20 @@ class MirrorPool:
 
         random.shuffle(mirrors_to_try)  # برای Load Balancing
 
+        # ---- تعریف تابع کمکی برای استریم پاسخ ----
+        async def stream_content(resp: httpx.Response) -> AsyncIterator[bytes]:
+            """
+            بدنه پاسخ را به صورت تکه‌تکه استریم کرده و منابع را آزاد می‌کند.
+            """
+            try:
+                async for chunk in resp.aiter_bytes():
+                    yield chunk
+            except Exception as e:
+                logger.error(f"{self.name}: Error streaming response chunk: {e}")
+            finally:
+                await resp.aclose() # اطمینان از بسته شدن پاسخ و آزاد شدن منابع
+        # ---- پایان تابع کمکی ----
+
         for mirror_url in mirrors_to_try:
             client = self.clients.get(mirror_url)
             if client is None or client.is_closed:
@@ -247,9 +261,17 @@ class MirrorPool:
             logger.info(f"{self.name} ({mirror_url}): Proxying {request.method} {target_url}")
 
             try:
-                # خواندن بدنه درخواست (اگر متد POST, PUT, PATCH و ... باشد)
-                # برای GET و HEAD، body خالی خواهد بود
-                request_body = await request.body()
+                # خواندن بدنه درخواست به صورت Stream
+                # برای متدهای POST, PUT, PATCH و ...
+                # برای GET و HEAD، body_stream خالی خواهد بود
+                
+                # اگر متد نیاز به بدنه دارد (POST, PUT, PATCH)
+                if request.method in ("POST", "PUT", "PATCH"):
+                    # ---- تغییر: استفاده از request.stream() ----
+                    request_body_stream = request.stream()
+                    # ---- پایان تغییر ----
+                else:
+                    request_body_stream = None # برای متدهای GET/HEAD و ...
 
                 # ساخت و ارسال درخواست به mirror
                 # استفاده از stream=True برای مدیریت پاسخ‌های حجیم
@@ -257,14 +279,19 @@ class MirrorPool:
                     method=request.method,
                     url=target_url,
                     headers=headers,
-                    content=request_body if request_body else None,
+                    # اگر request_body_stream وجود دارد، آن را به عنوان محتوا ارسال کن
+                    content=request_body_stream, 
                 )
                 resp = await client.send(req, stream=True)
 
                 # اگر Mirror پاسخ خطا داد (>= 400)
                 if resp.status_code >= 400:
                     logger.warning(f"{self.name} ({mirror_url}): Received error {resp.status_code} for {target_url}")
-                    error_body = await resp.aread() # خواندن بدنه خطا
+                    # ---- تغییر: خواندن بدنه خطا و بستن صریح پاسخ ----
+                    error_body = await resp.aread() # خواندن کامل بدنه خطا
+                    await resp.aclose() # بستن اتصال پاسخ
+                    # ---- پایان تغییر ----
+                    
                     # پاسخ خطا را مستقیماً به کاربر برگردان
                     response_headers = self._filter_response_headers(resp.headers)
                     return Response(content=error_body, status_code=resp.status_code, headers=response_headers, media_type=resp.headers.get("content-type"))
@@ -272,33 +299,15 @@ class MirrorPool:
                 # موفقیت: پاسخ Mirror را به صورت Streaming برگردان
                 response_headers = self._filter_response_headers(resp.headers)
                 
-                # اگر Mirror خودش 206 Partial Content فرستاده
-                if resp.status_code == 206:
-                    logger.info(f"{self.name} ({mirror_url}): Received 206 Partial Content for {target_url}")
-                    # Stream کردن مستقیم پاسخ 206
-                    async def stream_partial_content():
-                        try:
-                            async for chunk in resp.aiter_bytes():
-                                yield chunk
-                        except Exception as e:
-                            logger.error(f"{self.name} ({mirror_url}): Error streaming 206 response: {e}")
-                        finally:
-                            await resp.aclose()
-                    
-                    return StreamingResponse(content=stream_partial_content(), status_code=206, headers=response_headers)
-                
-                # اگر Mirror پاسخ 200 OK فرستاد (حالت عادی)
+                # ---- تغییر: استفاده از تابع کمکی stream_content برای هر دو حالت 200 و 206 ----
                 logger.info(f"{self.name} ({mirror_url}): Received {resp.status_code} for {target_url}")
-                async def stream_normal_content():
-                    try:
-                        async for chunk in resp.aiter_bytes():
-                            yield chunk
-                    except Exception as e:
-                        logger.error(f"{self.name} ({mirror_url}): Error streaming normal response: {e}")
-                    finally:
-                        await resp.aclose()
-                
-                return StreamingResponse(content=stream_normal_content(), status_code=resp.status_code, headers=response_headers)
+                return StreamingResponse(
+                    content=stream_content(resp),
+                    status_code=resp.status_code,
+                    headers=response_headers,
+                    media_type=resp.headers.get("content-type")
+                )
+                # ---- پایان تغییر ----
 
             except (httpx.ReadTimeout, httpx.ConnectTimeout, asyncio.TimeoutError) as e:
                 logger.warning(f"{self.name} ({mirror_url}): Timeout or connection error for {target_url}: {e}")
@@ -328,8 +337,8 @@ class MirrorPool:
             if k_lower not in {
                 'transfer-encoding', 'connection', 'keep-alive',
                 'proxy-authorization', 'proxy-authenticate',
-                'te', 'trailers', 'upgrade', 'content-encoding', # Content-Encoding را چون ممکن است باشد وhttpx آن را تغییر ندهد، می گذاریم
-                'content-length' # Content-Length را هم معمولا باید گذاشت
+                'te', 'trailers', 'upgrade', 'content-encoding',
+                'content-length'
             }:
                 filtered[k] = v
         return filtered
@@ -367,18 +376,26 @@ async def shutdown_event():
     هنگام بستن برنامه، تمام کلاینت‌های httpx را می‌بندد.
     """
     logger.info("Shutting down proxy, closing all httpx clients...")
-    await asyncio.gather(*(pool._close_client(m) for pool in [ubuntu_pool, debian_pool] for m in pool.clients))
+    # لیست تمام کلاینت‌های فعال را جمع آوری کرده و سپس ببندید
+    all_clients_to_close = []
+    for pool in [ubuntu_pool, debian_pool]:
+        for client in pool.clients.values():
+            if not client.is_closed:
+                all_clients_to_close.append(client.aclose())
+    if all_clients_to_close:
+        await asyncio.gather(*all_clients_to_close)
     logger.info("All clients closed.")
 
 # --- مدل ورودی برای درخواست‌های POST ---
-class ProxyRequest(BaseModel):
-    path: str
+# این مدل در حال حاضر استفاده نمی‌شود اما ممکن است در آینده مفید باشد
+# class ProxyRequest(BaseModel):
+#     path: str
 
 # --- Endpointهای اصلی پرواکسی ---
 # این Endpoint ها مسئول دریافت درخواست و ارسال آن به MirrorPool مناسب هستند.
 # URL پایه (/ubuntu یا /debian) در MirrorPool حذف می‌شود.
 
-@app.api_route("/{pool_name}/{path:path}", methods=["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"])
+@app.api_route("/{pool_name}/{path:path}", methods=["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "TRACE", "CONNECT", "PURGE"])
 async def smart_proxy(pool_name: str, path: str, request: Request):
     """
     درخواست‌ها را بر اساس pool_name (ubuntu یا debian) به MirrorPool مناسب هدایت می‌کند.
