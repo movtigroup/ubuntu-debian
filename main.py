@@ -337,8 +337,8 @@ class MirrorPool:
             if k_lower not in {
                 'transfer-encoding', 'connection', 'keep-alive',
                 'proxy-authorization', 'proxy-authenticate',
-                'te', 'trailers', 'upgrade', # 'content-encoding', # Content-Encoding را نگه می‌داریم
-                # 'content-length' # Content-Length را هم معمولا باید گذاشت
+                'te', 'trailers', 'upgrade', 'content-encoding',
+                'content-length'
             }:
                 filtered[k] = v
         return filtered
