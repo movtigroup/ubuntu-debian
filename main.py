@@ -38,7 +38,7 @@ DEBIAN_MIRRORS = [
     "https://mirror.shatel.ir/debian",
     "https://repo.hmirror.ir/debian",
     "http://linux-mirror.liara.ir/repository/debian",
-    "http://mirror.arvancloud.debian",
+    "http://mirror.arvancloud.ir/debian",
     "https://repo.abrha.net/debian",
     "https://mirror.mobinhost.com/debian",
     "https://mirrors.pardisco.co/debian",
