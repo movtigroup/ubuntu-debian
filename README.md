@@ -72,16 +72,16 @@ curl http://localhost:8000/status
 
 **برای Ubuntu (مثال 22.04 – Jammy):**
 ```bash
-deb http://HOST:8000/ubuntu jammy main restricted universe multiverse
-deb http://HOST:8000/ubuntu jammy-updates main restricted universe multiverse
-deb http://HOST:8000/ubuntu jammy-security main restricted universe multiverse
+deb https://mirro.ththt.ir/ubuntu jammy main restricted universe multiverse
+deb https://mirro.ththt.ir/ubuntu jammy-updates main restricted universe multiverse
+deb https://mirro.ththt.ir/ubuntu jammy-security main restricted universe multiverse
 ```
 
 **برای Debian (مثال 12 – Bookworm):**
 ```bash
-deb http://HOST:8000/debian bookworm main contrib non-free
-deb http://HOST:8000/debian bookworm-updates main contrib non-free
-deb http://HOST:8000/debian bookworm-security main contrib non-free
+deb https://mirro.ththt.ir/debian bookworm main contrib non-free
+deb https://mirro.ththt.ir/debian bookworm-updates main contrib non-free
+deb https://mirro.ththt.ir/debian bookworm-security main contrib non-free
 ```
 
 > **توجه:** APT از متد GET استفاده می‌کند در حالی که این سرویس POST می‌پذیرد. اگر نیاز به استفاده مستقیم با APT دارید، یک Reverse Proxy (مثل Nginx) در جلو قرار دهید که مسیرها را تبدیل کند. یا می‌توانید endpoint GET نیز اضافه کنید.
