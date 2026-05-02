@@ -11,9 +11,9 @@ from typing import Dict, List
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Smart Mirror Proxy", version="1.0")
+app = FastAPI(title="Smart Mirror Proxy", version="1.1")
 
-# ======================== لیست آینه‌ها ========================
+# ======================== لیست آینه‌ها (دستی و کامل) ========================
 UBUNTU_MIRRORS = [
     "http://repo.iut.ac.ir/ubuntu",
     "https://mirror.iranserver.com/ubuntu",
@@ -28,15 +28,23 @@ UBUNTU_MIRRORS = [
     "http://archive.ubuntu.com/ubuntu",          # پشتیبان جهانی
 ]
 
-# تبدیل خودکار ubuntu → debian
-DEBIAN_MIRRORS = []
-for m in UBUNTU_MIRRORS:
-    if "ubuntu" in m:
-        debian_m = m.replace("ubuntu", "debian")
-        DEBIAN_MIRRORS.append(debian_m)
-    else:
-        DEBIAN_MIRRORS.append(m.rstrip('/') + '/debian')
-DEBIAN_MIRRORS.append("http://deb.debian.org/debian")  # پشتیبان دبیان
+DEBIAN_MIRRORS = [
+    # آینه‌هایی که هم ubuntu و هم debian دارند (با تغییر مسیر)
+    "http://repo.iut.ac.ir/debian",
+    "https://mirror.iranserver.com/debian",
+    "https://mirror.shatel.ir/debian",
+    "https://repo.hmirror.ir/debian",
+    "http://linux-mirror.liara.ir/repository/debian",
+    "http://mirror.arvancloud.ir/debian",
+    "https://repo.abrha.net/debian",
+    "https://mirror.mobinhost.com/debian",
+    "https://mirrors.pardisco.co/debian",
+    # آینه اختصاصی دبیان که کاربر اشاره کرد
+    "https://mirror2.chabokan.net/debian",
+    # آینه‌های اصلی جهانی
+    "http://deb.debian.org/debian",
+    "http://ftp.debian.org/debian",
+]
 
 CHECK_PATHS = ["/dists/stable/Release", "/project/trace", "/ls-lR.gz"]
 
@@ -45,12 +53,11 @@ class MirrorPool:
     def __init__(self, mirrors: List[str], name: str):
         self.name = name
         self.mirrors = mirrors
-        self.health: Dict[str, dict] = {}   # {url: {"status": "up"/"down", "latency": float}}
-        self.healthy: List[str] = []        # لیست آینه‌های سالم
+        self.health: Dict[str, dict] = {}
+        self.healthy: List[str] = []
         self.lock = asyncio.Lock()
 
     async def health_check(self, client: httpx.AsyncClient):
-        """بررسی همزمان همه آینه‌ها"""
         async def check_one(mirror):
             start = time.monotonic()
             for path in CHECK_PATHS:
@@ -83,7 +90,6 @@ class MirrorPool:
         logger.info(f"{self.name}: {len(healthy)}/{len(self.mirrors)} mirrors healthy")
 
     async def proxy(self, client: httpx.AsyncClient, path: str) -> httpx.Response:
-        """ارسال درخواست به یک آینه سالم (با fallback)"""
         async with self.lock:
             mirrors = list(self.healthy)
         if not mirrors:
@@ -110,11 +116,11 @@ debian_pool = MirrorPool(DEBIAN_MIRRORS, "debian")
 
 # ======================== Health Check دوره‌ای ========================
 async def health_check_loop():
-    async with httpx.AsyncClient(verify=False) as client:   # verify=False برای آینه‌های با گواهی نامعتبر
+    async with httpx.AsyncClient(verify=False) as client:
         while True:
             await ubuntu_pool.health_check(client)
             await debian_pool.health_check(client)
-            await asyncio.sleep(120)   # هر ۲ دقیقه یکبار
+            await asyncio.sleep(120)
 
 @app.on_event("startup")
 async def startup():
@@ -122,12 +128,11 @@ async def startup():
 
 # ======================== مدل ورودی ========================
 class ProxyRequest(BaseModel):
-    path: str        # مثال: "/dists/jammy/Release" یا "/pool/main/h/hello/hello_2.10-1_amd64.deb"
+    path: str
 
 # ======================== Endpointهای اصلی ========================
 @app.post("/ubuntu")
 async def ubuntu_proxy(req: ProxyRequest):
-    """پروکسی برای مخازن ubuntu"""
     async with httpx.AsyncClient(verify=False) as client:
         resp = await ubuntu_pool.proxy(client, req.path)
     content = resp.content
@@ -139,7 +144,6 @@ async def ubuntu_proxy(req: ProxyRequest):
 
 @app.post("/debian")
 async def debian_proxy(req: ProxyRequest):
-    """پروکسی برای مخازن debian"""
     async with httpx.AsyncClient(verify=False) as client:
         resp = await debian_pool.proxy(client, req.path)
     content = resp.content
@@ -152,7 +156,6 @@ async def debian_proxy(req: ProxyRequest):
 # ======================== وضعیت ========================
 @app.get("/status")
 async def status():
-    """نمایش وضعیت تمام آینه‌ها"""
     return {
         "ubuntu": ubuntu_pool.health,
         "debian": debian_pool.health,
