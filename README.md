@@ -5,20 +5,24 @@
 [![Mirrors](https://img.shields.io/badge/Mirrors-Iranian-blue?style=for-the-badge)]()
 
 > **پروکسی هوشمند و سبک برای مخازن Ubuntu و Debian**
-> با استفاده از **آینه‌های داخلی (ایران)** و **کیفیت بالا**، سرعت دانلود بسته‌ها را چندین برابر کنید.
-> بدون نیاز به تغییر عادات – فقط کافیست sources.list را تنظیم کنید.
+> با استفاده از آینه‌های داخلی (ایران)، سرعت دانلود بسته‌ها را چندین برابر کنید.
+> بدون نیاز به تغییر عادات – فقط کافیست `sources.list` را تنظیم کنید.
+
+این سرویس به صورت آماده روی آدرس `https://mirro.ththt.ir` در دسترس است.
+همچنین می‌توانید کد را روی سرور خود اجرا کرده و لیست آینه‌ها را شخصی‌سازی کنید.
 
 ---
 
 ## ✨ ویژگی‌ها
 
-*   **آینه‌های داخلی با کیفیت** – پشتیبانی از بیش از ۱۰ آینه معتبر ایرانی (IUT، آرون‌کلود، آبرا نت، چابوکان و ...)
-*   **Health Check هوشمند** – هر ۲ دقیقه سلامت آینه‌ها بررسی شده و لیست سالم‌ها به‌روز می‌شود
-*   **Fallback خودکار** – اگر آینه‌ای پاسخ ندهد، درخواست به آینه سالم بعدی هدایت می‌شود
-*   **Load Balancing تصادفی** – توزیع بار بین آینه‌های سالم برای پایداری بیشتر
-*   **ایستا و سریع** – بدون نگهداری state، پاسخ مستقیم از آینه‌ها
-*   **پشتیبانی همزمان از Ubuntu و Debian** – دو endpoint جداگانه با استخر آینه مجزا
-*   **وضعیت لحظه‌ای** – endpoint `/status` وضعیت همه آینه‌ها و تأخیر آن‌ها را نمایش می‌دهد
+- **آینه‌های داخلی با کیفیت** – پشتیبانی از بیش از ۱۰ آینه معتبر ایرانی (IUT، آرون‌کلود، آبرا نت، چابوکان و ...)
+- **Health Check هوشمند** – هر ۲ دقیقه سلامت آینه‌ها بررسی شده و لیست سالم‌ها به‌روز می‌شود
+- **Fallback خودکار** – اگر آینه‌ای پاسخ ندهد، درخواست به آینه سالم بعدی هدایت می‌شود
+- **Load Balancing تصادفی** – توزیع بار بین آینه‌های سالم برای پایداری بیشتر
+- **ایستا و سریع** – بدون نگهداری state، پاسخ مستقیم از آینه‌ها
+- **پشتیبانی همزمان از Ubuntu و Debian** – دو endpoint جداگانه با استخر آینه مجزا
+- **وضعیت لحظه‌ای** – endpoint `/status` وضعیت همه آینه‌ها و تأخیر آن‌ها را نمایش می‌دهد
+- **بدون Cache** – این پروکسی فایلی را ذخیره نمی‌کند و فقط هدایت می‌کند
 
 ---
 
@@ -27,64 +31,65 @@
 ### با Docker (توصیه شده)
 
 ```bash
-git clone https://github.com/yourusername/smart-mirror-proxy.git
+git clone https://github.com/movtigroup/ubuntu-debian.git
 cd smart-mirror-proxy
 docker-compose up -d
 ```
 
-سرویس روی پورت `8000` در دسترس است.
+سرویس روی پورت `8000` در دسترس خواهد بود.
 
 ### بدون Docker (نیازمند Python 3.11+)
 
 ```bash
 pip install -r requirements.txt
-python main.py
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 ---
 
-## 📡 استفاده
+## 📡 نحوه استفاده
 
-### 1️⃣ درخواست مستقیم (API)
+### 1️⃣ استفاده به عنوان Proxy APT
 
-#### دریافت فایل از مخازن Ubuntu
-```bash
-curl -X POST http://localhost:8000/ubuntu \
-  -H "Content-Type: application/json" \
-  -d '{"path": "/dists/jammy/Release"}'
-```
+فایل `/etc/apt/sources.list` خود را با آدرس پروکسی به‌روز کنید:
 
-#### دریافت فایل از مخازن Debian
-```bash
-curl -X POST http://localhost:8000/debian \
-  -H "Content-Type: application/json" \
-  -d '{"path": "/dists/stable/Release"}'
-```
-
-#### مشاهده وضعیت همه آینه‌ها
-```bash
-curl http://localhost:8000/status
-```
-
-### 2️⃣ استفاده به عنوان Proxy APT/APT
-
-فایل `/etc/apt/sources.list` را به‌روز کنید:
-
-**برای Ubuntu (مثال 22.04 – Jammy):**
+**Ubuntu 22.04 (Jammy):**
 ```bash
 deb https://mirro.ththt.ir/ubuntu jammy main restricted universe multiverse
 deb https://mirro.ththt.ir/ubuntu jammy-updates main restricted universe multiverse
 deb https://mirro.ththt.ir/ubuntu jammy-security main restricted universe multiverse
 ```
 
-**برای Debian (مثال 12 – Bookworm):**
+**Debian 12 (Bookworm):**
 ```bash
 deb https://mirro.ththt.ir/debian bookworm main contrib non-free
 deb https://mirro.ththt.ir/debian bookworm-updates main contrib non-free
 deb https://mirro.ththt.ir/debian bookworm-security main contrib non-free
 ```
 
-> **توجه:** APT از متد GET استفاده می‌کند در حالی که این سرویس POST می‌پذیرد. اگر نیاز به استفاده مستقیم با APT دارید، یک Reverse Proxy (مثل Nginx) در جلو قرار دهید که مسیرها را تبدیل کند. یا می‌توانید endpoint GET نیز اضافه کنید.
+> **توجه:** APT به صورت پیش‌فرض از متد `GET` استفاده می‌کند. اگر از نسخه میزبانی شده (`mirro.ththt.ir`) استفاده می‌کنید، آن سرویس به‌گونه‌ای پیکربندی شده که درخواست‌های `GET` را نیز بپذیرد.
+> در صورت اجرای محلی، باید یک Reverse Proxy (مثل Nginx) در جلو قرار دهید که `GET` را به `POST` داخلی تبدیل کند، یا endpoint `GET` به کد اضافه کنید. (در حال حاضر فقط `POST` پشتیبانی می‌شود)
+
+### 2️⃣ درخواست مستقیم (API)
+
+#### دریافت فایل از مخازن Ubuntu
+```bash
+curl -X POST https://mirro.ththt.ir/ubuntu \
+  -H "Content-Type: application/json" \
+  -d '{"path": "/dists/jammy/Release"}'
+```
+
+#### دریافت فایل از مخازن Debian
+```bash
+curl -X POST https://mirro.ththt.ir/debian \
+  -H "Content-Type: application/json" \
+  -d '{"path": "/dists/stable/Release"}'
+```
+
+#### مشاهده وضعیت همه آینه‌ها
+```bash
+curl https://mirro.ththt.ir/status
+```
 
 ---
 
@@ -123,16 +128,18 @@ deb https://mirro.ththt.ir/debian bookworm-security main contrib non-free
 | `deb.debian.org/debian` | HTTP (پشتیبان جهانی) |
 | `ftp.debian.org/debian` | HTTP (پشتیبان جهانی) |
 
-> **نکته مهم:** تمام آینه‌های ذکر شده **داخلی (ایران)** هستند و کیفیت بسیار بالایی برای کاربران داخل کشور دارند. آینه‌های جهانی به عنوان **پشتیبان (fallback)** در نظر گرفته شده‌اند تا در صورت قطعی کامل آینه‌های داخلی، سرویس قطع نشود.
+> تمام آینه‌های ذکر شده **داخلی (ایران)** هستند و کیفیت بالایی برای کاربران داخل کشور دارند. آینه‌های جهانی تنها به عنوان پشتیبان (fallback) استفاده می‌شوند.
 
 ---
 
-## 📊 Health Check و Load Balancing
+## ⚙️ نحوه عملکرد Health Check و Load Balancing
 
-- **Health Check** هر ۱۲۰ ثانیه به صورت خودکار انجام می‌شود.
-- سه مسیر `/dists/stable/Release`، `/project/trace` و `/ls-lR.gz` برای بررسی استفاده می‌شود.
+- **Health Check** هر ۱۲۰ ثانیه به صورت خودکار اجرا می‌شود.
+- برای بررسی سلامت، سه مسیر `/dists/stable/Release`، `/project/trace` و `/ls-lR.gz` تست می‌شوند.
 - آینه‌های سالم در یک استخر قرار می‌گیرند و درخواست‌ها به صورت تصادفی بین آن‌ها توزیع می‌شود.
 - اگر هیچ آینه‌ای سالم نباشد، از آخرین آینه موجود در لیست (آینه اصلی جهانی) به عنوان fallback استفاده می‌شود.
+
+> **تغییر تنظیمات:** می‌توانید بازه health check و مسیرهای تست را در فایل `main.py` تغییر دهید.
 
 ---
 
@@ -181,13 +188,14 @@ services:
 
 ---
 
-## 📝 یادداشت‌های مهم
+## 📝 نکات مهم
 
-1. **کیفیت آینه‌های داخلی:** آینه‌های لیست شده همگی با بالاترین کیفیت و پایداری از مراکز داده معتبر ایران انتخاب شده‌اند. با استفاده از این سرویس، تجربه نصب و به‌روزرسانی بسته‌ها در اوج سرعت خواهد بود.
+1. **کیفیت آینه‌های داخلی:** آینه‌های لیست شده همگی با بالاترین کیفیت و پایداری از مراکز داده معتبر ایران انتخاب شده‌اند.
 2. **عدم ذخیره‌سازی:** این پروکسی **هیچ فایلی را کش نمی‌کند** و صرفاً درخواست را به آینه سالم هدایت می‌کند.
 3. **تحمل خطا:** اگر آینه‌ای دچار مشکل شود، درخواست بلافاصله به آینه بعدی هدایت می‌شود و کاربر متوجه قطعی نخواهد شد.
 4. **اندازه پاسخ:** برای دانلود فایل‌های حجیم (مثل ISOs) محدودیتی وجود ندارد.
 5. **امنیت:** درخواست‌ها با `verify=False` ارسال می‌شوند تا آینه‌هایی که گواهی SSL نامعتبر دارند هم کار کنند. اگر امنیت بالا نیاز دارید، این گزینه را غیرفعال کنید.
+6. **استفاده با APT محلی:** اگر سرویس را به صورت محلی اجرا می‌کنید و می‌خواهید APT مستقیماً از آن استفاده کند، باید یک Reverse Proxy (مانند Nginx) تنظیم کنید تا درخواست‌های `GET` را به `POST` داخلی تبدیل کند. یا endpoint `GET` به کد اضافه کنید.
 
 ---
 
