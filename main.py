@@ -29,7 +29,7 @@ UBUNTU_MIRRORS = [
     "https://mirror.mobinhost.com/ubuntu",
     "https://mirrors.pardisco.co/ubuntu",
     "https://mirror2.chabokan.net/ubuntu",
-    "http://archive.ubuntu.com/ubuntu",          # پشتیبان جهانی
+    "http://archive.ubuntu.com/ubuntu", # پشتیبان جهانی
 ]
 
 DEBIAN_MIRRORS = [
@@ -45,6 +45,7 @@ DEBIAN_MIRRORS = [
     "https://mirror2.chabokan.net/debian",
     "http://deb.debian.org/debian",
     "http://ftp.debian.org/debian",
+    "https://mirror.cdn.ir/repository/debian",
 ]
 
 # مسیرهایی که برای بررسی سلامت آینه‌ها استفاده می‌شوند
