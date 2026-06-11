@@ -16,6 +16,7 @@
 ## ✨ ویژگی‌های جدید (v2.0)
 
 - **پشتیبانی از توزیع‌های متنوع** – اضافه شدن Arch Linux، Alpine و CentOS در کنار Ubuntu و Debian.
+- **پشتیبانی از مخزن Docker** – قابلیت دریافت کلید GPG و پکیج‌های داکر از طریق پروکسی.
 - **سیستم اولویت‌بندی دو مرحله‌ای (Tiered System)** –
   - **Tier 1:** آینه‌های باکیفیت داخلی (ایران) برای ترافیک نیم‌بها و سرعت حداکثری.
   - **Tier 2:** آینه‌های معتبر جهانی (چین، اروپا، آمریکا) در صورت در دسترس نبودن آینه‌های داخلی.
@@ -54,6 +55,22 @@ deb http://YOUR_PROXY_IP:8000/ubuntu jammy main restricted
 deb http://YOUR_PROXY_IP:8000/debian bookworm main
 ```
 
+### **Docker (Ubuntu / Debian)**
+تنظیم کلید GPG:
+```bash
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL http://YOUR_PROXY_IP:8000/docker/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+اضافه کردن مخزن به `sources.list.d`:
+```bash
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] http://YOUR_PROXY_IP:8000/docker/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
+
 ### **Arch Linux**
 فایل `/etc/pacman.d/mirrorlist`:
 ```bash
@@ -75,6 +92,7 @@ http://YOUR_PROXY_IP:8000/alpine/v3.18/main
 
 - **Ubuntu** (`/ubuntu`)
 - **Debian** (`/debian`)
+- **Docker** (`/docker`)
 - **Arch Linux** (`/archlinux`)
 - **Alpine** (`/alpine`)
 - **CentOS** (`/centos`)

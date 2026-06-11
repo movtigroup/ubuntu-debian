@@ -82,5 +82,16 @@ MIRRORS = {
             "http://mirror.centos.org/centos",
             "http://mirrors.kernel.org/centos",
         ]
+    },
+    "docker": {
+        "tier1": [
+            "https://repo.abrha.net/docker",
+        ],
+        "tier2": [
+            "https://download.docker.com/linux",
+            "https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux",
+            "https://mirrors.ustc.edu.cn/docker-ce/linux",
+            "https://mirrors.aliyun.com/docker-ce/linux",
+        ]
     }
 }
