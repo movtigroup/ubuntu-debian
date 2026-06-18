@@ -14,7 +14,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # کپی سورس اپلیکیشن
-COPY main.py .
+COPY . .
 
 # expose پورت سرویس
 EXPOSE 8000
