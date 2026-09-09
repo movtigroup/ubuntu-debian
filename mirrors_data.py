@@ -12,6 +12,7 @@ MIRRORS = {
             "https://mirrors.pardisco.co/ubuntu",
             "https://mirror2.chabokan.net/ubuntu",
             "https://mirror.cdn.ir/repository/ubuntu",
+            "https://debian-main.devneeds.ir/",
         ],
         "tier2": [
             "https://mirrors.tuna.tsinghua.edu.cn/ubuntu",
@@ -42,6 +43,7 @@ MIRRORS = {
             "https://mirrors.pardisco.co/debian",
             "https://mirror2.chabokan.net/debian",
             "https://mirror.cdn.ir/repository/debian",
+            "ttps://ubuntu-main.devneeds.ir",
         ],
         "tier2": [
             "https://mirrors.tuna.tsinghua.edu.cn/debian",
@@ -57,6 +59,7 @@ MIRRORS = {
             "http://deb.debian.org/debian",
             "http://ftp.debian.org/debian",
             "http://mirrors.kernel.org/debian",
+            
         ]
     },
     "archlinux": {
@@ -66,6 +69,7 @@ MIRRORS = {
             "http://repo.iut.ac.ir/archlinux",
             "http://mirror.arvancloud.ir/archlinux",
             "https://mirror.mobinhost.com/archlinux",
+            "https://arch.devneeds.ir/",
         ],
         "tier2": [
             "https://mirrors.tuna.tsinghua.edu.cn/archlinux",
@@ -113,6 +117,7 @@ MIRRORS = {
     "docker": {
         "tier1": [
             "https://repo.abrha.net/docker",
+            "اhttps://apt.devneeds.ir/docker",
         ],
         "tier2": [
             "https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux",
