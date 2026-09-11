@@ -91,6 +91,72 @@ Edit files in `/etc/yum.repos.d/` and change `baseurl` to the proxy address.
 
 ---
 
+## 🪟 Windows Update Proxy
+
+Due to sanctions, Microsoft's Windows Update servers do not respond to requests from Iranian IPs. You can fetch Windows updates through domestic proxy services instead.
+
+### 📝 Known Windows Update proxies
+
+| Service | Address | Type | Notes |
+|---|---|---|---|
+| **DevNeeds** | `win.devneeds.ir:8445` | Iran 🇮🇷 | Dedicated Windows Update proxy (recommended) |
+| **Microsoft Update Catalog** | `catalog.update.microsoft.com` | Global 🌍 | Direct update downloads (usually not sanctioned) |
+| **WSUS Offline Update** | `wsusoffline.com` | Tool 🌍 | Open-source tool for offline update downloads |
+
+> **Note:** No public free foreign Windows Update proxy services exist (updates are unrestricted outside Iran). If you know other Iranian services, please submit a Pull Request to this repository.
+>
+> ⚠️ **Security notice:** Your update traffic passes through a third-party server. Windows updates are digitally signed by Microsoft, but only use services you trust.
+
+### 🚀 How to configure the proxy for Windows Updates
+
+#### 1. Enable the proxy
+
+Open PowerShell as **Administrator** and set the `proxy` variable:
+
+```powershell
+$proxy = "win.devneeds.ir:8445"
+```
+
+Then copy and paste the following commands line by line (right-click to paste):
+
+```powershell
+netsh winhttp set proxy $proxy
+
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 1
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -Value $proxy
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -Value ""
+
+Write-Host "Proxy ENABLED"
+```
+
+#### 2. Start the update
+
+You can start updating via the GUI at `Settings --> Update & Security`.
+
+Or run the following in PowerShell:
+
+```powershell
+Start-Service wuauserv
+usoclient StartScan; usoclient StartDownload; usoclient StartInstall
+```
+
+#### 3. Disable the proxy (rollback)
+
+> **Note:** Make sure to run PowerShell as Administrator and execute the commands line by line:
+
+```powershell
+netsh winhttp reset proxy
+
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 0
+
+Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -ErrorAction SilentlyContinue
+Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -ErrorAction SilentlyContinue
+
+Write-Host "Proxy DISABLED (rollback done)"
+```
+
+---
+
 ## 📋 Supported Distributions
 
 - **Ubuntu** (`/ubuntu`)

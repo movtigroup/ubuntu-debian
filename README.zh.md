@@ -91,6 +91,72 @@ http://YOUR_PROXY_IP:8000/alpine/v3.18/main
 
 ---
 
+## 🪟 Windows 更新代理
+
+由于制裁原因，微软的 Windows Update 服务器不会响应来自伊朗 IP 的请求。您可以通过伊朗境内的代理服务来获取 Windows 更新。
+
+### 📝 已知的 Windows 更新代理
+
+| 服务 | 地址 | 类型 | 说明 |
+|---|---|---|---|
+| **DevNeeds** | `win.devneeds.ir:8445` | 伊朗 🇮🇷 | 专用 Windows Update 代理（推荐） |
+| **Microsoft Update Catalog** | `catalog.update.microsoft.com` | 全球 🌍 | 直接下载更新（通常不受制裁） |
+| **WSUS Offline Update** | `wsusoffline.com` | 工具 🌍 | 用于离线下载更新的开源工具 |
+
+> **注意：** 国外不存在公开免费的 Windows 更新代理服务（因为更新在伊朗境外不受限制）。如果您知道其他伊朗服务，请向本仓库提交 Pull Request。
+>
+> ⚠️ **安全提示：** 您的更新流量会经过第三方服务器。Windows 更新由微软进行数字签名，但请仅使用您信任的服务。
+
+### 🚀 Windows 更新代理配置教程
+
+#### 1. 启用代理
+
+以 **Administrator** 身份运行 PowerShell，并设置 `proxy` 变量：
+
+```powershell
+$proxy = "win.devneeds.ir:8445"
+```
+
+然后逐行复制并粘贴以下命令（可使用鼠标右键粘贴）：
+
+```powershell
+netsh winhttp set proxy $proxy
+
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 1
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -Value $proxy
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -Value ""
+
+Write-Host "Proxy ENABLED"
+```
+
+#### 2. 开始更新
+
+您可以通过图形界面在 `Settings --> Update & Security` 中开始更新。
+
+或者在 PowerShell 中运行以下命令：
+
+```powershell
+Start-Service wuauserv
+usoclient StartScan; usoclient StartDownload; usoclient StartInstall
+```
+
+#### 3. 禁用代理（回滚）
+
+> **注意：** 请务必以 Administrator 身份逐行运行 PowerShell 命令：
+
+```powershell
+netsh winhttp reset proxy
+
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 0
+
+Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -ErrorAction SilentlyContinue
+Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -ErrorAction SilentlyContinue
+
+Write-Host "Proxy DISABLED (rollback done)"
+```
+
+---
+
 ## 📋 支持的发行版
 
 - **Ubuntu** (`/ubuntu`)

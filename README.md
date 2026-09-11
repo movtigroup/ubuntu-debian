@@ -91,6 +91,74 @@ http://YOUR_PROXY_IP:8000/alpine/v3.18/main
 
 ---
 
+## 🪟 پروکسی آپدیت ویندوز (Windows Update)
+
+به دلیل تحریم‌ها، سرورهای Windows Update مایکروسافت به درخواست‌های IPهای ایران پاسخ نمی‌دهند. برای دریافت آپدیت‌های ویندوز می‌توانید از پروکسی‌های داخلی استفاده کنید. این بخش آموزش تنظیم پروکسی و لیست آینه‌های شناخته‌شده را ارائه می‌دهد.
+
+### 📝 لیست پروکسی‌های شناخته‌شده آپدیت ویندوز
+
+| سرویس | آدرس | نوع | توضیحات |
+|---|---|---|---|
+| **DevNeeds** | `win.devneeds.ir:8445` | ایران 🇮🇷 | پروکسی اختصاصی Windows Update (توصیه شده) |
+| **Microsoft Update Catalog** | `catalog.update.microsoft.com` | جهانی 🌍 | دانلود مستقیم آپدیت‌ها (معمولاً بدون تحریم) |
+| **WSUS Offline Update** | `wsusoffline.com` | ابزار 🌍 | ابزار متن‌باز برای دانلود آفلاین آپدیت‌ها |
+
+> **نکته:** سرویس عمومی و رایگان مشابه برای پروکسی آپدیت ویندوز در خارج از ایران وجود ندارد (چون آپدیت ویندوز در خارج از ایران بدون محدودیت است). اگر از سرویس‌های ایرانی دیگری استفاده می‌کنید، لطفاً در این مخزن Pull Request ثبت کنید.
+>
+> ⚠️ **هشدار امنیتی:** ترافیک آپدیت شما از سرور شخص ثالث عبور می‌کند. آپدیت‌های ویندوز توسط مایکروسافت امضای دیجیتال می‌شوند، اما بهتر است فقط از سرویس‌های معتبر استفاده کنید.
+
+### 🚀 آموزش تنظیم پراکسی برای دریافت آپدیت‌های ویندوز
+
+#### ۱. فعال‌سازی پراکسی
+
+در ابتدا ابزار PowerShell را با دسترسی **Administrator** در سیستم خود اجرا کنید و متغیر `proxy` را با استفاده از دستور زیر تنظیم کنید:
+
+```powershell
+$proxy = "win.devneeds.ir:8445"
+```
+
+سپس دستورات زیر را خط به خط کپی کرده و در PowerShell جایگذاری کنید (می‌توانید با استفاده از کلیک راست، جایگذاری را انجام دهید):
+
+```powershell
+netsh winhttp set proxy $proxy
+
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 1
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -Value $proxy
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -Value ""
+
+Write-Host "Proxy ENABLED"
+```
+
+#### ۲. شروع روند بروزرسانی
+
+روند بروزرسانی را می‌توانید با استفاده از رابط گرافیکی از مسیر `Settings --> Update & Security` شروع کنید.
+
+یا با وارد کردن دستور زیر در محیط PowerShell، فرآیند بروزرسانی را شروع کنید:
+
+```powershell
+Start-Service wuauserv
+usoclient StartScan; usoclient StartDownload; usoclient StartInstall
+```
+
+#### ۳. غیرفعال‌سازی پراکسی (بازگردانی)
+
+غیرفعال‌سازی پراکسی با تنظیم مقادیر زیر در PowerShell انجام می‌شود.
+
+> **نکته:** حتماً دقت داشته باشید که PowerShell را با دسترسی Administrator و خط به خط اجرا کنید:
+
+```powershell
+netsh winhttp reset proxy
+
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 0
+
+Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -ErrorAction SilentlyContinue
+Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -ErrorAction SilentlyContinue
+
+Write-Host "Proxy DISABLED (rollback done)"
+```
+
+---
+
 ## 📋 توزیع‌های پشتیبانی شده
 
 - **Ubuntu** (`/ubuntu`)
