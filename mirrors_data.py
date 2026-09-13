@@ -12,7 +12,9 @@ MIRRORS = {
             "https://mirrors.pardisco.co/ubuntu",
             "https://mirror2.chabokan.net/ubuntu",
             "https://mirror.cdn.ir/repository/ubuntu",
-            "https://debian-main.devneeds.ir/",
+            "https://ubuntu-main.devneeds.ir",
+            "https://ubuntu.pishgaman.net/",
+            
         ],
         "tier2": [
             "https://mirrors.tuna.tsinghua.edu.cn/ubuntu",
