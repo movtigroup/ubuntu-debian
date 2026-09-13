@@ -13,7 +13,11 @@ MIRRORS = {
             "https://mirror2.chabokan.net/ubuntu",
             "https://mirror.cdn.ir/repository/ubuntu",
             "https://ubuntu-main.devneeds.ir",
-            "https://ubuntu.pishgaman.net/",
+            "https://ubuntu.pishgaman.net",
+            "http://ir.linuxmirrors.ir:8080",
+            "https://mirror.kargadan.ir/repository/ubuntu-proxy/",
+            "https://mirror.rasanegaar.com/ubuntu",
+            "https://mirror.aminidc.com/ubuntu/",
             
         ],
         "tier2": [
@@ -72,6 +76,7 @@ MIRRORS = {
             "http://mirror.arvancloud.ir/archlinux",
             "https://mirror.mobinhost.com/archlinux",
             "https://arch.devneeds.ir/",
+            "https://mirror.parchlinux.ir/$repo/$arch",
         ],
         "tier2": [
             "https://mirrors.tuna.tsinghua.edu.cn/archlinux",
